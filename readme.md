@@ -23,7 +23,7 @@ the simple steps needed to use this script, all you have to do is download the s
 
 <br/><br/>
 
-### 5 - POC
+### 3 - POC
 ---
 <p align="center">
   <img src="docs/help.png"><br/>

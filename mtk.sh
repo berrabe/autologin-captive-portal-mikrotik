@@ -30,24 +30,9 @@ function MD5Salt() {
 
     salt1=$(echo "$req" | awk -F "'" '{print $2;}')
     salt2=$(echo "$req" | awk -F "'" '{print $4;}')
-    printf_ "Encoded Salt" "$salt1$salt2"
-
-    encoded=$(echo "$salt1 - $salt2" | sed 's/\\/ /g')
-    for i in $encoded; do
-        if [[ $i == "-" ]]; then
-            _SALT_=$_SALT_+berrabe
-            continue
-        fi
-
-        # convet octal to decimal
-        convert_octal=$(echo $((8#$i)))
-
-        # convert decimal to ASCII
-        decoded=$(printf \\$(printf '%03o' "$convert_octal"))
-
-        _SALT_=$_SALT_+$decoded
-    done
-    printf "  |--[+] %-20s : " "Decoded Salt"; echo "$_SALT_"
+    printf "  |--[+] %-20s : " "Encoded Salt"; echo "$salt1$salt2"
+    printf_ "Decoded Salt" "$salt1$salt2"
+    _salted_pass_=$(printf "$salt1$_PASS_$salt2")
 }
 
 function skidipapap() {
@@ -74,14 +59,11 @@ function main() {
 
     printf_ "Hashing Password" header
     printf_ "Plain Password" "$_PASS_"
-    hashed_passwd=$(echo -ne $_SALT_ | sed 's/berrabe/'"$_PASS_"'/g' | sed 's/+//g' | md5sum | awk '{print $1}')
+    hashed_passwd=$(echo -ne $_salted_pass_ | md5sum | awk '{print $1}')
     printf_ "Hashed Password" "$hashed_passwd"
 
     printf_ "Connecting" header
     skidipapap
-
-    printf_ "Logout" header
-    printf_ "Disconnect With" "${Yellow}curl -qI -X GET $_URL_/logout${NoColor}"
 }
 
 clear; printf_ "Automated Login Captive Portal | berrabe" title

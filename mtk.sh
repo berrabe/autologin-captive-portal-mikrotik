@@ -1,0 +1,99 @@
+#!/bin/env bash
+
+# List of Colors
+Light_Red="\033[1;31m"
+Light_Green="\033[1;32m"
+Yellow="\033[1;33m"
+Light_Blue="\033[1;34m"
+Light_Purple="\033[1;35m"
+Light_Cyan="\033[1;36m"
+NoColor="\033[0m"
+
+function printf_() {
+    if [[ $2 == 'title' ]]; then
+        printf "\n\n\t\t ${Light_Purple}%s${NoColor} \n" "$1"
+    elif [[ $2 == 'header' ]]; then
+        printf "\n\n${Light_Cyan} [+] %-20s ${NoColor} \n" "$1"
+    else
+        printf "  |--[+] %-20s : %b\n" "$1" "$2"
+    fi
+}
+
+function MD5Salt() {
+    req=$(curl -s $_URL_/login | grep -iE 'md5.*password')
+
+    if [[ $(echo $req | wc -m) -le 10 ]]; then
+        printf_ "Status" "${Light_Green}Already Logged In${NoColor}"
+        printf_ "Disconnect With" "${Yellow}curl -qI -X GET $_URL_/logout${NoColor}"
+        exit 0
+    fi
+
+    salt1=$(echo "$req" | awk -F "'" '{print $2;}')
+    salt2=$(echo "$req" | awk -F "'" '{print $4;}')
+    printf_ "Encoded Salt" "$salt1$salt2"
+
+    encoded=$(echo "$salt1 - $salt2" | sed 's/\\/ /g')
+    for i in $encoded; do
+        if [[ $i == "-" ]]; then
+            _SALT_=$_SALT_+berrabe
+            continue
+        fi
+
+        # convet octal to decimal
+        convert_octal=$(echo $((8#$i)))
+
+        # convert decimal to ASCII
+        decoded=$(printf \\$(printf '%03o' "$convert_octal"))
+
+        _SALT_=$_SALT_+$decoded
+    done
+    printf "  |--[+] %-20s : " "Decoded Salt"; echo "$_SALT_"
+}
+
+function skidipapap() {
+    printf_ "Userame" $_USER_
+    printf_ "Password" $_PASS_
+    printf_ "Hashed Password" $hashed_passwd
+    req=$(curl -s -X POST $_URL_/login -d username=$_USER_ -d password=$hashed_passwd -d dst= -d popup=true)
+
+    if [[ $? -eq 0 && $(echo $req | grep -w 'You are logged in' | wc -l) -eq 1 ]]; then
+        printf_ "Status" "${Light_Green}SUCCESS${NoColor}"
+    else
+        printf_ "Status" "${Light_Red}FAILED${NoColor}"
+    fi
+}
+
+function main() {
+    printf_ "Params" header
+    printf_ "URL" $_URL_
+    printf_ "Username" $_USER_
+    printf_ "Password" $_PASS_
+
+    printf_ "Decoding Salt" header
+    MD5Salt
+
+    printf_ "Hashing Password" header
+    printf_ "Plain Password" "$_PASS_"
+    hashed_passwd=$(echo -ne $_SALT_ | sed 's/berrabe/'"$_PASS_"'/g' | sed 's/+//g' | md5sum | awk '{print $1}')
+    printf_ "Hashed Password" "$hashed_passwd"
+
+    printf_ "Connecting" header
+    skidipapap
+
+    printf_ "Logout" header
+    printf_ "Disconnect With" "${Yellow}curl -qI -X GET $_URL_/logout${NoColor}"
+}
+
+clear; printf_ "Automated Login Captive Portal | berrabe" title
+if [[ $1 == "" || $2 == "" ]]; then
+    printf_ "HELP PAGE" header
+    printf_ "Params" "${Yellow}mtk.sh  < URL >  < USER >  < PASS >${NoColor}"
+    printf_ "Example 1" "${Light_Blue}mtk.sh https://10.0.0.1 berrabe 12345${NoColor}"
+    printf_ "Example 2" "${Light_Blue}mtk.sh https://10.0.0.1 admin${NoColor}"
+    exit 1
+else
+    _URL_=$1
+    _USER_=$2
+    _PASS_=$3
+    main
+fi

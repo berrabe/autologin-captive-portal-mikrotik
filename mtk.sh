@@ -32,7 +32,10 @@ function MD5Salt() {
     salt2=$(echo "$req" | awk -F "'" '{print $4;}')
     printf "  |--[+] %-20s : " "Encoded Salt"; echo "$salt1$salt2"
     printf_ "Decoded Salt" "$salt1$salt2"
-    _salted_pass_=$(printf "$salt1$_PASS_$salt2")
+
+    # prevent error null byte on input
+    _salted_pass_=$(printf "$salt1$_PASS_$salt2" | tr -d '\0')
+
 }
 
 function skidipapap() {
@@ -50,7 +53,11 @@ function skidipapap() {
 
 function main() {
     printf_ "Params" header
-    printf_ "URL" $_URL_
+    if [[ $_AUTO_DISCOVER_ -eq 1 ]]; then
+        printf_ "URL" "$_URL_    [ Auto Discovery ]"
+    else
+        printf_ "URL" $_URL_
+    fi
     printf_ "Username" $_USER_
     printf_ "Password" $_PASS_
 
@@ -70,11 +77,17 @@ clear; printf_ "Automated Login Captive Portal | berrabe" title
 if [[ $1 == "" || $2 == "" ]]; then
     printf_ "HELP PAGE" header
     printf_ "Params" "${Yellow}mtk.sh  < URL >  < USER >  < PASS >${NoColor}"
-    printf_ "Example 1" "${Light_Blue}mtk.sh https://10.0.0.1 berrabe 12345${NoColor}"
-    printf_ "Example 2" "${Light_Blue}mtk.sh https://10.0.0.1 admin${NoColor}"
+    printf_ "Example 1" "${Light_Blue}mtk.sh http://10.0.0.1 berrabe 12345${NoColor}"
+    printf_ "Example 2" "${Light_Blue}mtk.sh http://10.0.0.1 admin${NoColor}"
+    printf_ "Auto Discovery URI" "${Light_Blue}mtk.sh auto admin${NoColor}"
     exit 1
 else
-    _URL_=$1
+    if [[ $1 == "auto" ]]; then
+        _URL_="http://$(ip route show | grep -wE '^default via' | awk '{print $3}')"
+        _AUTO_DISCOVER_=1
+    else
+        _URL_=$1
+    fi
     _USER_=$2
     _PASS_=$3
     main

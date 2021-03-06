@@ -1,5 +1,7 @@
 #!/bin/env bash
 
+_LIST_TOOLS_=( "curl" "awk" "sed" "mtk.s" )
+
 # List of Colors
 Light_Red="\033[1;31m"
 Light_Green="\033[1;32m"
@@ -17,6 +19,15 @@ function printf_() {
     else
         printf "  |--[+] %-20s : %b\n" "$1" "$2"
     fi
+}
+
+function check_program() {
+    for arr_tools in ${_LIST_TOOLS_[@]}; do
+        if ! [ -x "$(command -v $arr_tools)" ]; then
+            printf_ "ERROR | $arr_tools Is Not Installed" header
+            exit 1
+        fi
+    done
 }
 
 function MD5Salt() {
@@ -52,6 +63,8 @@ function skidipapap() {
 }
 
 function main() {
+    check_program
+
     printf_ "Params" header
     if [[ $_AUTO_DISCOVER_ -eq 1 ]]; then
         printf_ "URL" "$_URL_    [ Auto Discovery ]"

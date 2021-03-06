@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-_LIST_TOOLS_=( "curl" "awk" "sed" "mtk.s" )
+_LIST_TOOLS_=( "curl" "awk" "sed" )
 
 # List of Colors
 Light_Red="\033[1;31m"
